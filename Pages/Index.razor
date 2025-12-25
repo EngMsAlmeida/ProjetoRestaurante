@@ -1,0 +1,12 @@
+@page "/"
+
+<h1>Conectado com Sucesso!</h1>
+
+<button class="btn btn-primary" @onclick="Incrementar">
+    Clique para testar o C#: @contador
+</button>
+
+@code {
+    private int contador = 0;
+    void Incrementar() => contador++;
+}
