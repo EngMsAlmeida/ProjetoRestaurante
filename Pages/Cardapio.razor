@@ -36,6 +36,7 @@
                         <th>ID</th>
                         <th>Nome</th>
                         <th>Preço</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -46,6 +47,9 @@
                             <td>@p.Nome</td>
                             <td>@p.Preco.ToString("C")</td>
                         </tr>
+                            <button class="btn btn-outline-danger btn-sm" @onclick="() => Excluir(p)">
+                                Excluir
+                            </button>
                     }
                 </tbody>
             </table>
@@ -77,5 +81,12 @@
             novoProduto = new Produto(); 
             CarregarProdutos(); 
         }
+    }
+
+    private void Excluir(Produto produtoParaRemover)
+    {
+        DbContext.Produtos.Remove(produtoParaRemover);
+        DbContext.SaveChanges();
+        CarregarProdutos();
     }
 }
