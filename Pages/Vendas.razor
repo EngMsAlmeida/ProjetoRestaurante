@@ -16,7 +16,7 @@
                     @foreach (var produto in produtosDisponiveis)
                     {
                         <div class="col-md-6 mb-3">
-                            <div class="card h-100 border-start border-4 @(produto.Categoria == "Lanche" ? "border-success" : "border-primary")">
+                            <div class="card h-100 border-start border-4 @ObterCorCategoria(produto.Categoria)">
                                 <div class="card-body d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 class="mb-0">@produto.Nome</h6>
@@ -180,5 +180,16 @@
         {
             Console.WriteLine($"Erro ao salvar: {ex.Message}");
         }
+    }
+    private string ObterCorCategoria(string? categoria)
+    {
+        // O .Trim() remove espaços vazios e o switch compara o texto exato
+        return categoria?.Trim() switch
+        {
+            "Lanche" => "border-success",    // Verde (Comida)
+            "Bebida" => "border-primary",    // Azul (Líquidos/Refresco)
+            "Sobremesa" => "border-warning",  // Vermelho ou Rosa (Doce/Destaque)
+            _ => "border-secondary"          // Cinza (Caso venha vazio ou diferente)
+        };
     }
 }
