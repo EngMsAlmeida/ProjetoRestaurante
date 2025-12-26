@@ -1,0 +1,90 @@
+@page "/cozinha"
+@using ProjetoRestaurante.Models
+@using Microsoft.EntityFrameworkCore
+@inject ProjetoRestaurante.Data.AppDbContext DbContext
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>👨‍🍳 Monitor de Preparo</h2>
+        <button class="btn btn-outline-primary" @onclick="CarregarPedidos">
+            <i class="bi bi-arrow-clockwise"></i> Atualizar
+        </button>
+    </div>
+
+    <div class="row">
+        @if (pedidosPendentes.Count == 0)
+        {
+            <div class="col-12 text-center mt-5">
+                <h4 class="text-muted">Tudo em dia! Nenhum pedido pendente. 😴</h4>
+            </div>
+        }
+
+        @foreach (var pedido in pedidosPendentes)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm border-warning">
+                    <div class="card-header bg-warning d-flex justify-content-between">
+                        <span class="fw-bold">MESA @pedido.MesaId</span>
+                        <span>@pedido.DataHora.ToString("HH:mm")</span>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            @foreach (var item in pedido.Itens)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    @item.Produto?.Nome
+                                    <span class="badge bg-dark rounded-pill">x @item.Quantidade</span>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <button class="btn btn-success w-100" @onclick="() => FinalizarPreparo(pedido)">
+                            ✅ Marcar como Pronto
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<Pedido> pedidosPendentes = new();
+
+    protected override void OnInitialized() => CarregarPedidos();
+
+    private void CarregarPedidos()
+    {
+        DbContext.ChangeTracker.Clear();
+
+        pedidosPendentes = DbContext.Pedidos
+            .AsNoTracking() 
+            .Include(p => p.Itens)
+                .ThenInclude(i => i.Produto)
+            .Where(p => p.Status == "Pendente")
+            .OrderBy(p => p.DataHora)
+            .ToList();
+    }
+
+    private void FinalizarPreparo(Pedido pedido)
+    {
+        // Mudar o status do pedido
+        pedido.Status = "Pronto";
+        DbContext.Pedidos.Update(pedido);
+
+        // Procurar a mesa deste pedido para a libertar
+        var mesa = DbContext.Mesas.FirstOrDefault(m => m.Id == pedido.MesaId);
+        if (mesa != null)
+        {
+            mesa.EstaOcupada = false;
+            DbContext.Mesas.Update(mesa);
+        }
+
+        // Guardar as duas alterações no banco de dados
+        DbContext.SaveChanges();
+        
+        // Atualizar lista da cozinha
+        CarregarPedidos();
+    }
+}

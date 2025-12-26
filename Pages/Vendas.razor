@@ -53,8 +53,12 @@
                                 <span style="font-size: 0.8rem;" class="@(mesaSelecionadaId == m.Id ? "text-white-50" : "text-muted")">MESA</span>
                                 <span style="font-size: 1.5rem;">@m.Numero</span>
                                 
-                                @if (m.EstaOcupada) {
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.5rem;">OCUPADA</span>
+                                @if (m.EstaOcupada) 
+                                {
+                                    <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger shadow-sm" 
+                                        style="font-size: 0.7rem; z-index: 10;">
+                                        OCUPADA
+                                    </span>
                                 }
                             </div>
                         }
@@ -141,27 +145,40 @@
 
     private void FinalizarPedido()
     {
-        // mesaSelecionadaId
-        var novoPedido = new Pedido
-        {
-            MesaId = mesaSelecionadaId, 
-            DataHora = DateTime.Now,
-            Status = "Pendente",
-            ValorTotal = totalPedido
-        };
+        if (mesaSelecionadaId <= 0 || carrinho.Count == 0) return;
 
-        // Vincular os itens e limpar a referência circular para o EF não bugar
-        foreach (var item in carrinho)
+        try 
         {
-            item.Produto = null; 
+            // Crir o pedido principal
+            var novoPedido = new Pedido
+            {
+                MesaId = mesaSelecionadaId,
+                DataHora = DateTime.Now,
+                Status = "Pendente",
+                ValorTotal = totalPedido,
+                Itens = carrinho.Select(i => new ItemPedido {
+                    ProdutoId = i.ProdutoId,
+                    Quantidade = i.Quantidade,
+                    PrecoNoMomento = i.PrecoNoMomento
+                }).ToList()
+            };
+
+            DbContext.Pedidos.Add(novoPedido);
+            
+            // Se a Model Mesa tiver o campo 'EstaOcupada', marcar Ocupada
+            var mesa = DbContext.Mesas.Find(mesaSelecionadaId);
+            if (mesa != null) mesa.EstaOcupada = true;
+
+            DbContext.SaveChanges();
+
+            // Limpeza para o próximo
+            carrinho.Clear();
+            mesaSelecionadaId = 0;
+            StateHasChanged();
         }
-        novoPedido.Itens = carrinho;
-
-        DbContext.Pedidos.Add(novoPedido);
-        DbContext.SaveChanges();
-
-        // 3. Resetar a tela
-        carrinho.Clear();
-        mesaSelecionadaId = 0; 
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao salvar: {ex.Message}");
+        }
     }
 }
