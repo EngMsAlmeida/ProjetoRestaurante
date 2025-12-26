@@ -22,7 +22,10 @@
                                         <h6 class="mb-0">@produto.Nome</h6>
                                         <small class="text-muted">@produto.Preco.ToString("C")</small>
                                     </div>
-                                    <button class="btn btn-outline-dark btn-sm" @onclick="() => AdicionarAoCarrinho(produto)">
+                                    
+                                    @* Botão simplificado: Sempre diz Add e mantém o estilo padrão *@
+                                    <button class="btn btn-outline-dark btn-sm" 
+                                            @onclick="() => AdicionarAoCarrinho(produto)">
                                         <i class="bi bi-plus-lg"></i> Add
                                     </button>
                                 </div>
@@ -78,13 +81,18 @@
                         @foreach (var item in carrinho)
                         {
                             <tr>
-                                <td>@item.Produto?.Nome</td>
-                                <td>@item.Quantidade</td>
-                                <td>@((item.Quantidade * item.PrecoNoMomento).ToString("C"))</td>
-                                <td>
-                                    <button class="btn btn-link text-danger p-0" @onclick="() => RemoverDoCarrinho(item)">
-                                        <i class="bi bi-x-circle"></i>
-                                    </button>
+                                <td class="align-middle">@item.Produto?.Nome</td>
+                                <td class="align-middle">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button class="btn btn-sm btn-outline-danger py-0 px-2 fw-bold" @onclick="() => RemoverUmDoCarrinho(item)">-</button>
+
+                                        <span class="fw-bold">@item.Quantidade</span>
+
+                                        <button class="btn btn-sm btn-outline-success py-0 px-2 fw-bold" @onclick="() => AdicionarAoCarrinho(item.Produto!)">+</button>
+                                    </div>
+                                </td>
+                                <td class="align-middle text-end">
+                                    @((item.Quantidade * item.PrecoNoMomento).ToString("C"))
                                 </td>
                             </tr>
                         }
@@ -141,7 +149,17 @@
         }
     }
 
-    private void RemoverDoCarrinho(ItemPedido item) => carrinho.Remove(item);
+    private void RemoverUmDoCarrinho(ItemPedido item)
+    {
+        if (item.Quantidade > 1)
+        {
+            item.Quantidade--;
+        }
+        else
+        {
+            carrinho.Remove(item);
+        }
+    }
 
     private void FinalizarPedido()
     {
