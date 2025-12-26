@@ -1,0 +1,62 @@
+@page "/gerenciar-mesas"
+@using ProjetoRestaurante.Models
+@inject ProjetoRestaurante.Data.AppDbContext DbContext
+
+<div class="container">
+    <h3>📍 Configuração de Mesas</h3>
+    
+    <div class="card p-3 mb-4 shadow-sm border-0 bg-light">
+        <div class="row align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Número da Nova Mesa</label>
+                <input type="number" class="form-control form-control-lg" @bind="novaMesa.Numero" />
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-primary btn-lg w-100" @onclick="SalvarMesa">
+                    <i class="bi bi-plus-circle"></i> Adicionar Mesa
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        @foreach (var m in mesas)
+        {
+            <div class="col-md-2 mb-3">
+                <div class="card text-center shadow-sm @(m.EstaOcupada ? "border-danger" : "border-success")">
+                    <div class="card-body">
+                        <h4 class="mb-0">Mesa @m.Numero</h4>
+                        <small class="text-muted d-block mb-2">Token: @m.TokenAcesso</small>
+                        <button class="btn btn-outline-danger btn-sm border-0" @onclick="() => ExcluirMesa(m)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private Mesa novaMesa = new();
+    private List<Mesa> mesas = new();
+
+    protected override void OnInitialized() => CarregarMesas();
+
+    private void CarregarMesas() => mesas = DbContext.Mesas.OrderBy(m => m.Numero).ToList();
+
+    private void SalvarMesa() {
+        if (novaMesa.Numero > 0) {
+            DbContext.Mesas.Add(novaMesa);
+            DbContext.SaveChanges();
+            novaMesa = new Mesa(); // O TokenAcesso novo será gerado automaticamente
+            CarregarMesas();
+        }
+    }
+
+    private void ExcluirMesa(Mesa m) {
+        DbContext.Mesas.Remove(m);
+        DbContext.SaveChanges();
+        CarregarMesas();
+    }
+}
