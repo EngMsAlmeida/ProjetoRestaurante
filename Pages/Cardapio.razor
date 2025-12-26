@@ -21,6 +21,15 @@
                 <label class="form-label font-weight-bold">Preço (R$)</label>
                 <input type="number" step="0.01" class="form-control form-control-lg" @bind="novoProduto.Preco" />
             </div>
+            <div class="col-md-3">
+                <label class="form-label font-weight-bold">Categoria</label>
+                <select class="form-select form-select-lg" @bind="novoProduto.Categoria">
+                    <option value="">Selecione...</option>
+                    <option value="Lanche">🍔 Lanche</option>
+                    <option value="Bebida">🥤 Bebida</option>
+                    <option value="Sobremesa">🍰 Sobremesa</option>
+                </select>
+            </div>
             <div class="col-md-3 d-flex align-items-end">
                 <button class="btn @(isEditando ? "btn-primary" : "btn-success") btn-lg w-100" @onclick="Salvar">
                     <i class="bi bi-save"></i> @(isEditando ? "Atualizar Alterações" : "Gravar no Banco")
@@ -33,12 +42,13 @@
     {
         <div class="mt-5">
             <h4>📋 Itens Cadastrados</h4>
-            <table class="table table-hover mt-3">
+            <table class="table table-hover table-striped mt-3">
                 <thead class="table-dark">
                     <tr>
                         <th>ID</th>
                         <th>Nome</th>
                         <th>Preço</th>
+                        <th>Categoria</th>
                         <th class="text-center">Ações</th>
                     </tr>
                 </thead>
@@ -49,6 +59,15 @@
                             <td>@p.Id</td>
                             <td>@p.Nome</td>
                             <td>@p.Preco.ToString("C")</td>
+                            <td>
+                                @if (p.Categoria == "Lanche") {
+                                    <span class="badge bg-success">🍔 @p.Categoria</span>
+                                } else if (p.Categoria == "Bebida") {
+                                    <span class="badge bg-primary">🥤 @p.Categoria</span>
+                                } else {
+                                    <span class="badge bg-warning text-dark">🍰 @p.Categoria</span>
+                                }
+                            </td>
                             <td class="text-center">
                                 @* BOTÃO EDITAR *@
                                 <button class="btn btn-outline-primary btn-sm me-2" @onclick="() => PrepararEdicao(p)">
@@ -60,6 +79,7 @@
                                     <i class="bi bi-trash"></i> Excluir
                                 </button>
                             </td>
+                            
                         </tr>
                     }
                 </tbody>
@@ -86,22 +106,26 @@
 
     private void Salvar()
     {
-        if (!string.IsNullOrWhiteSpace(novoProduto.Nome) && novoProduto.Preco > 0)
+        // verificação da categoria
+        if (string.IsNullOrWhiteSpace(novoProduto.Nome) || 
+            novoProduto.Preco <= 0 || 
+            string.IsNullOrWhiteSpace(novoProduto.Categoria))
         {
-            if (isEditando)
-            {
-                DbContext.Produtos.Update(novoProduto);
-            }
-            else
-            {
-                DbContext.Produtos.Add(novoProduto);
-            }
-
-            DbContext.SaveChanges();
-            novoProduto = new Produto(); 
-            isEditando = false;         
-            CarregarProdutos();
+            return;
         }
+
+        if (isEditando)
+        {
+            DbContext.Produtos.Update(novoProduto);
+        }
+        else
+        {
+            DbContext.Produtos.Add(novoProduto);
+        }
+
+        DbContext.SaveChanges();
+        LimparFormulario();
+        CarregarProdutos();
     }
 
     private void PrepararEdicao(Produto p)
@@ -123,4 +147,10 @@
         DbContext.SaveChanges();
         CarregarProdutos();
     }
+
+    private void LimparFormulario()
+{
+    novoProduto = new Produto();
+    isEditando = false;          
+}
 }
